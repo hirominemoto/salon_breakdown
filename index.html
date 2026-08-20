@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIサロンツール 6案 機能分解表</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: #F7F6F2;
+    color: #1a1a1a;
+    padding: 40px 24px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  header .label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+  }
+
+  header p {
+    margin-top: 8px;
+    color: #555;
+    font-size: 13px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 28px;
+    overflow: hidden;
+    border: 1px solid #E8E6E0;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #F0EDE6;
+  }
+
+  .card-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: #1a1a1a;
+    border-radius: 6px;
+    padding: 3px 8px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .card-price {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .card-body {
+    padding: 20px 24px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 10px;
+    margin-top: 18px;
+  }
+
+  .section-label:first-child {
+    margin-top: 0;
+  }
+
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .step {
+    background: #F7F6F2;
+    border: 1px solid #E8E6E0;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: #333;
+  }
+
+  .step.ai {
+    background: #EEF2FF;
+    border-color: #C7D2FE;
+    color: #3730A3;
+    font-weight: 600;
+  }
+
+  .arrow {
+    color: #ccc;
+    font-size: 12px;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 11px;
+    border-radius: 20px;
+    padding: 3px 10px;
+    border: 1px solid;
+  }
+
+  .tag.public { background: #F0FDF4; border-color: #86EFAC; color: #166534; }
+  .tag.internal { background: #FEF9C3; border-color: #FDE047; color: #854D0E; }
+  .tag.recruit { background: #FEF2F2; border-color: #FCA5A5; color: #991B1B; }
+  .tag.user { background: #F0F9FF; border-color: #7DD3FC; color: #075985; }
+  .tag.api { background: #FDF4FF; border-color: #E879F9; color: #701A75; }
+
+  .note {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: #FFFBEB;
+    border-left: 3px solid #F59E0B;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #78350F;
+  }
+
+  .note strong { font-weight: 700; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #555;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  footer {
+    margin-top: 40px;
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label">設計調査フェーズ / Step 1</div>
+  <h1>AIサロンツール 6案 機能分解</h1>
+  <p>クロ担当：機能・ロジック側の分解　／　ペチちゃん担当：外部データ取得可能性調査（次フェーズ）</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3730A3"></div> AI処理が必要な工程</div>
+  <div class="legend-item"><span class="tag public" style="font-size:10px;padding:1px 7px">公開情報</span> スクレイピング等で取得可能</div>
+  <div class="legend-item"><span class="tag recruit" style="font-size:10px;padding:1px 7px">リクルート提供</span> 代理店契約必須・要注意</div>
+  <div class="legend-item"><span class="tag user" style="font-size:10px;padding:1px 7px">店舗入力</span> サロン側から提供してもらうデータ</div>
+  <div class="legend-item"><span class="tag api" style="font-size:10px;padding:1px 7px">API</span> 外部サービスAPI（要確認）</div>
+</div>
+
+<!-- ① -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-num">① </div>
+    <div>
+      <div class="card-title">AIブログ作成ツール</div>
+      <div class="card-price">月額 5,000円前後</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="section-label">機能フロー</div>
+    <div class="flow">
+      <span class="step">サロン基本情報入力</span>
+      <span class="arrow">→</span>
+      <span class="step">メニュー・強み入力</span>
+      <span class="arrow">→</span>
+      <span class="step ai">テーマ提案（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">ブログ本文生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">SNS投稿文生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">LINE配信文生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step">確認・編集・出力</span>
+    </div>
+
+    <div class="section-label">必要データ</div>
+    <div class="tags">
+      <span class="tag user">サロン名・住所・コンセプト</span>
+      <span class="tag user">メニュー一覧・価格</span>
+      <span class="tag user">スタッフ情報</span>
+      <span class="tag public">HPBページ情報（補完用）</span>
+    </div>
+
+    <div class="note">
+      <strong>ポイント：</strong>AIが担当するのはほぼ全工程。必要データの大半が「店舗入力」なので、リクルート依存度は低い。既存の申込書セルフチェックAIとロジックが近い。⑥の「ブログ更新催促」機能の出力部分として統合できる。
+    </div>
+  </div>
+</div>
+
+<!-- ② -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-num">② </div>
+    <div>
+      <div class="card-title">ホットペッパー改善AI</div>
+      <div class="card-price">月額 9,800円前後</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="section-label">機能フロー（ペチちゃん案を補完）</div>
+    <div class="flow">
+      <span class="step">HPB URL入力</span>
+      <span class="arrow">→</span>
+      <span class="step">自店情報スクレイピング</span>
+      <span class="arrow">→</span>
+      <span class="step">競合店スクレイピング</span>
+      <span class="arrow">→</span>
+      <span class="step ai">自店解析（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">競合比較（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">改善案生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step">定期再解析（スケジューラ）</span>
+      <span class="arrow">→</span>
+      <span class="step">レポート出力</span>
+    </div>
+
+    <div class="section-label">必要データ</div>
+    <div class="tags">
+      <span class="tag public">HPB掲載情報（公開ページ）</span>
+      <span class="tag public">競合店HPBページ</span>
+      <span class="tag recruit">閲覧数・予約転換率</span>
+      <span class="tag recruit">検索順位データ</span>
+    </div>
+
+    <div class="note">
+      <strong>⚠️ 要注意：</strong>スクレイピングで取れる「掲載内容の見た目」は公開情報だが、<strong>閲覧数・予約CV・検索順位はリクルート提供データ</strong>。これがないと「改善提案」の根拠が薄くなる。既存スクレイパーで代替できる範囲の精査が必要。
+    </div>
+  </div>
+</div>
+
+<!-- ③ -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-num">③ </div>
+    <div>
+      <div class="card-title">AI写真診断</div>
+      <div class="card-price">月額 3,000円前後</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="section-label">機能フロー</div>
+    <div class="flow">
+      <span class="step">HPBページから写真取得</span>
+      <span class="arrow">→</span>
+      <span class="step ai">画像解析（AI Vision）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">明るさ・構図・印象評価（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">競合写真と比較（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">改善ポイント・撮影構図提案（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step">レポート出力</span>
+    </div>
+
+    <div class="section-label">必要データ</div>
+    <div class="tags">
+      <span class="tag public">HPB掲載写真（公開）</span>
+      <span class="tag public">競合店掲載写真（公開）</span>
+    </div>
+
+    <div class="note">
+      <strong>ポイント：</strong>必要データがすべて公開情報なので、リクルート依存度ゼロ。ただし画像解析にVision系APIが必要（コスト要確認）。単体商品より⑥の診断機能として組み込む方が自然。
+    </div>
+  </div>
+</div>
+
+<!-- ④ -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-num">④ </div>
+    <div>
+      <div class="card-title">AI競合分析</div>
+      <div class="card-price">月額 9,800円前後</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="section-label">機能フロー</div>
+    <div class="flow">
+      <span class="step">競合サロンURL登録</span>
+      <span class="arrow">→</span>
+      <span class="step">定期スクレイピング（スケジューラ）</span>
+      <span class="arrow">→</span>
+      <span class="step">前回データとの差分検出</span>
+      <span class="arrow">→</span>
+      <span class="step ai">変更内容の分類・解釈（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">自店への影響推論（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step">LINE / メール通知</span>
+    </div>
+
+    <div class="section-label">必要データ</div>
+    <div class="tags">
+      <span class="tag public">競合HPBページ（クーポン・写真・メニュー）</span>
+      <span class="tag public">競合GBP情報</span>
+      <span class="tag user">監視対象サロンURL</span>
+    </div>
+
+    <div class="note">
+      <strong>ポイント：</strong>差分検出自体はAI不要（単純比較）。AIが効くのは「この変化が何を意味するか・自店にどう影響するか」の推論部分のみ。リクルート依存なし。⑥の入力データとして機能する。通知基盤（LINE等）の実装コストに注意。
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-num">⑤ </div>
+    <div>
+      <div class="card-title">AIクーポンメーカー</div>
+      <div class="card-price">月額 5,000円前後</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="section-label">機能フロー</div>
+    <div class="flow">
+      <span class="step">施術名・ターゲット入力</span>
+      <span class="arrow">→</span>
+      <span class="step">現在のクーポン入力（任意）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">クーポンタイトル複数生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">キャッチコピー生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">説明文生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">既存クーポン改善提案（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step">選択・コピー出力</span>
+    </div>
+
+    <div class="section-label">必要データ</div>
+    <div class="tags">
+      <span class="tag user">施術名・価格・ターゲット</span>
+      <span class="tag user">既存クーポン文（改善用）</span>
+      <span class="tag public">競合クーポン事例（参考用）</span>
+    </div>
+
+    <div class="note">
+      <strong>ポイント：</strong>①と同様にリクルート依存なし。ほぼ全工程AIで完結。シンプルなので単体でも成立するが、②や⑥の「クーポン改善」出力部分として統合する方が価値が高い。
+    </div>
+  </div>
+</div>
+
+<!-- ⑥ -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-num">⑥ </div>
+    <div>
+      <div class="card-title">AIサロンパートナー ★本命</div>
+      <div class="card-price">月額 9,800円前後</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="section-label">機能フロー（ペチちゃん案を補完）</div>
+    <div class="flow">
+      <span class="step">各種データ取得（自店・競合・GBP）</span>
+      <span class="arrow">→</span>
+      <span class="step">前回との差分検出</span>
+      <span class="arrow">→</span>
+      <span class="step ai">KPI判定（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">問題抽出（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">優先順位づけ（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step ai">改善施策の推論・根拠生成（AI）</span>
+      <span class="arrow">→</span>
+      <span class="step">LINE等で通知</span>
+    </div>
+
+    <div class="section-label">必要データ</div>
+    <div class="tags">
+      <span class="tag public">HPB掲載情報・写真・クーポン</span>
+      <span class="tag public">競合HPBページ</span>
+      <span class="tag recruit">口コミ数・評価（HPB内部）</span>
+      <span class="tag api">GBP情報（Google Business Profile API）</span>
+      <span class="tag user">売上・予約数（店舗入力）</span>
+      <span class="tag user">目標KPI（店舗設定）</span>
+    </div>
+
+    <div class="note">
+      <strong>⚠️ 最重要確認事項：</strong>口コミ数・評価はHPBの<strong>公開ページに表示されている</strong>ため、リクルート提供データに頼らずスクレイピングで取得できる可能性がある。ただし<strong>利用規約の商用利用条項の確認が必須</strong>。GBP APIはペチちゃんが調査予定。売上・予約数は店舗側から入力してもらう設計にすれば代理店終了後も継続可能。
+    </div>
+  </div>
+</div>
+
+<div style="background:#fff;border:1px solid #E8E6E0;border-radius:12px;padding:24px;margin-top:32px;">
+  <div style="font-size:13px;font-weight:700;margin-bottom:16px;color:#1a1a1a;">🔍 次フェーズ：ペチちゃん担当 外部データ調査項目</div>
+  <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#444;">
+    <div>① HPBのスクレイピング：利用規約上の商用利用可否</div>
+    <div>② Google Business Profile API：取得可能情報・利用条件・コスト</div>
+    <div>③ HPB口コミ・評価：公開情報としての取得可否</div>
+    <div>④ 予約・CV数：代替取得手段の有無</div>
+    <div>⑤ LINE Messaging API：通知機能実装コスト概算</div>
+  </div>
+</div>
+
+<footer>
+  クロ作成 / 2026.08.20 ― 機能・ロジック分解フェーズ
+</footer>
+
+</body>
+</html>
